@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # Load the trained model and scaler
 model = joblib.load("random_forest_model.pkl")
@@ -18,8 +20,8 @@ feature_names = [
 st.title("Expensive Home Classifier")
 st.write("This app uses a trained Random Forest model to classify whether a house is considered expensive based on its features.")
 
-# Tabs for manual input and CSV upload
-tab1, tab2 = st.tabs(["Manual Input", "CSV Upload"])
+# Define three tabs now: Manual Input, CSV Upload, Data Insights
+tab1, tab2, tab3 = st.tabs(["Manual Input", "CSV Upload", "Data Insights"])
 
 # ----- Manual Input Tab -----
 with tab1:
@@ -75,6 +77,42 @@ with tab2:
             st.error("Your CSV is missing one or more required columns.")
 
     st.markdown("Download the CSV template from your instructor or project guide.")
+
+# ----- Data Insights Tab -----
+with tab3:
+    st.header("Exploratory Data Analysis & Visualizations")
+
+    # Load the cleaned dataset
+    df_cleaned = pd.read_csv("df_cleaned.csv")
+
+    # 1. Target Distribution
+    fig, ax = plt.subplots()
+    sns.countplot(x='expensive_home', data=df_cleaned, palette='pastel', ax=ax)
+    ax.set_title('Distribution of Expensive vs Non-Expensive Homes')
+    st.pyplot(fig)
+
+    # 2. Living Space by Expensive Classification
+    fig, ax = plt.subplots()
+    sns.boxplot(data=df_cleaned, x='expensive_home', y='sqft_living', palette='pastel', ax=ax)
+    ax.set_title('Living Space by Expensive Classification')
+    st.pyplot(fig)
+
+    # 3. Correlation Heatmap
+    fig, ax = plt.subplots(figsize=(10, 8))
+    corr_matrix = df_cleaned.corr(numeric_only=True)
+    sns.heatmap(corr_matrix, annot=True, fmt=".2f", cmap='coolwarm', center=0, ax=ax)
+    ax.set_title("Feature Correlation Matrix")
+    st.pyplot(fig)
+
+    # 4. Proportion of Expensive Homes by Grade
+    fig, ax = plt.subplots()
+    df_cleaned.groupby('grade')['expensive_home'].mean().plot(
+        kind='bar', color='skyblue', edgecolor='black', ax=ax
+    )
+    ax.set_title('Proportion of Expensive Homes by Grade')
+    ax.set_xlabel('House Grade')
+    ax.set_ylabel('Proportion Expensive')
+    st.pyplot(fig)
 
 # Footer
 st.markdown("---")
