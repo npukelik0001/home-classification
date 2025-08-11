@@ -82,37 +82,93 @@ with tab2:
 with tab3:
     st.header("Exploratory Data Analysis & Visualizations")
 
-    # Load the cleaned dataset
     df_cleaned = pd.read_csv("df_cleaned.csv")
 
-    # 1. Target Distribution
-    fig, ax = plt.subplots()
-    sns.countplot(x='expensive_home', data=df_cleaned, palette='pastel', ax=ax)
-    ax.set_title('Distribution of Expensive vs Non-Expensive Homes')
-    st.pyplot(fig)
+    # Use default style
+    plt.style.use('default')
 
-    # 2. Living Space by Expensive Classification
-    fig, ax = plt.subplots()
-    sns.boxplot(data=df_cleaned, x='expensive_home', y='sqft_living', palette='pastel', ax=ax)
-    ax.set_title('Living Space by Expensive Classification')
-    st.pyplot(fig)
+    # Plot 1: Target Distribution Pie Chart
+    fig1, ax1 = plt.subplots(figsize=(6,6))
+    target_counts = df_cleaned['expensive_home'].value_counts()
+    labels = ['Not Expensive (0)', 'Expensive (1)']
+    ax1.pie(target_counts.values, labels=labels, autopct='%1.1f%%', startangle=90, colors=['#66b3ff','#ff9999'])
+    ax1.set_title('Distribution of Expensive vs Not Expensive Homes')
+    st.pyplot(fig1)
 
-    # 3. Correlation Heatmap
-    fig, ax = plt.subplots(figsize=(10, 8))
-    corr_matrix = df_cleaned.corr(numeric_only=True)
-    sns.heatmap(corr_matrix, annot=True, fmt=".2f", cmap='coolwarm', center=0, ax=ax)
-    ax.set_title("Feature Correlation Matrix")
-    st.pyplot(fig)
+    # Plot 2: Bar and Box Plots side by side
+    fig2, axes = plt.subplots(1, 2, figsize=(14, 5))
 
-    # 4. Proportion of Expensive Homes by Grade
-    fig, ax = plt.subplots()
+    sns.countplot(x='expensive_home', data=df_cleaned, palette='pastel', ax=axes[0])
+    axes[0].set_title('Distribution of Expensive vs Non-Expensive Homes')
+    axes[0].set_xlabel('Expensive Home (0 = No, 1 = Yes)')
+    axes[0].set_ylabel('Count')
+
+    sns.boxplot(data=df_cleaned, x='expensive_home', y='sqft_living', palette='pastel', ax=axes[1])
+    axes[1].set_title('Living Space by Expensive Classification')
+    axes[1].set_xlabel('Expensive Home (0 = No, 1 = Yes)')
+    axes[1].set_ylabel('sqft_living')
+
+    plt.tight_layout()
+    st.pyplot(fig2)
+
+    # Summary stats
+    st.subheader("Expensive Home Statistics (by Class):")
+    st.write(df_cleaned['expensive_home'].value_counts())
+    st.write("Proportions:")
+    st.write(df_cleaned['expensive_home'].value_counts(normalize=True).round(2))
+
+    st.subheader("Visual Interpretations:")
+    st.markdown("""
+    1. Around 59% of the homes are classified as expensive, showing a slightly imbalanced but acceptable target distribution.  
+    2. Expensive homes tend to have significantly larger living space, with higher median and wider spread in sqft_living.  
+    3. The expensive category contains more extreme outliers in square footage, which may influence model performance.
+    """)
+
+    # Create sqft_bin column for binning sqft_living
+    df_cleaned['sqft_bin'] = pd.cut(df_cleaned['sqft_living'],
+                                    bins=[0, 1000, 1500, 2000, 2500, 3000, 4000, 6000, np.inf],
+                                    labels=['<1000', '1000–1500', '1500–2000', '2000–2500',
+                                            '2500–3000', '3000–4000', '4000–6000', '6000+'])
+
+    # Calculate proportion of expensive homes per bin
+    bin_summary = df_cleaned.groupby('sqft_bin')['expensive_home'].mean().reset_index()
+
+    # Plot 3: Proportion of Expensive Homes by Square Footage
+    fig3, ax3 = plt.subplots(figsize=(10,6))
+    sns.barplot(data=bin_summary, x='sqft_bin', y='expensive_home', palette='pastel', ax=ax3)
+    ax3.set_title('Proportion of Expensive Homes by Square Footage')
+    ax3.set_xlabel('Square Footage Bins')
+    ax3.set_ylabel('Proportion of Homes Classified as Expensive')
+    ax3.set_ylim(0,1)
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    st.pyplot(fig3)
+
+    st.subheader("Visual Interpretations:")
+    st.markdown("""
+    1. Larger homes (especially above 4000 sq ft) are overwhelmingly classified as expensive.  
+    2. There's a sharp increase in expensive classification starting around 2500–3000 sq ft.  
+    3. Homes under 1500 sq ft are rarely considered expensive, typically under 20%.
+    """)
+
+    # Plot 4: Proportion of Expensive Homes by Grade
+    fig4, ax4 = plt.subplots(figsize=(10,6))
     df_cleaned.groupby('grade')['expensive_home'].mean().plot(
-        kind='bar', color='skyblue', edgecolor='black', ax=ax
+        kind='bar', color='skyblue', edgecolor='black', ax=ax4
     )
-    ax.set_title('Proportion of Expensive Homes by Grade')
-    ax.set_xlabel('House Grade')
-    ax.set_ylabel('Proportion Expensive')
-    st.pyplot(fig)
+    ax4.set_title('Proportion of Expensive Homes by Grade')
+    ax4.set_xlabel('House Grade')
+    ax4.set_ylabel('Proportion of Expensive Homes')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    st.pyplot(fig4)
+
+    st.subheader("Visual Interpretations:")
+    st.markdown("""
+    1. Homes with grades 10 and above are almost always classified as expensive, with proportions close to 1.  
+    2. Mid-tier grades like 8 and 9 show a mix of expensive and non-expensive homes, while grades below 7 are rarely classified as expensive.  
+    3. The steep increase in proportion between grades 8 and 9 suggests that this threshold may be critical for predicting expensive homes.
+    """)
 
 # Footer
 st.markdown("---")
