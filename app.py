@@ -119,7 +119,7 @@ with tab3:
 
     st.subheader("Visual Interpretations:")
     st.markdown("""
-    1. Around 51% of the homes are classified as expensive, showing a slightly imbalanced but acceptable target distribution.  
+    1. Around 50% of the homes are classified as expensive, showing a slightly imbalanced but acceptable target distribution.  
     2. Expensive homes tend to have significantly larger living space, with higher median and wider spread in sqft_living.  
     3. The expensive category contains more extreme outliers in square footage, which may influence model performance.
     """)
@@ -173,4 +173,5 @@ with tab3:
 # Footer
 st.markdown("---")
 st.caption("Model trained on KC House dataset (2000–2015 homes). Features include structure, view, and location (latitude).")
+
 
